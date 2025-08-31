@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  opensearch-node1:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: opensearch-node1
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"  # keep memory usage low
+      - "DISABLE_SECURITY_PLUGIN=true"  # just for dev, remove in prod
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data  # persist data
+    ports:
+      - "9200:9200"  # port for API requests to OpenSearch
+      - "9600:9600"  # for performance monitoring
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  lode-api:
+    container_name: lode-api
+    # tell Docker Compose to build the image from the lode-api repo folder
+    build: ../lode-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      opensearch-node1:
+        condition: service_started
+
+volumes:
+  opensearch-data:

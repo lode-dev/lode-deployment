@@ -34,6 +34,8 @@ services:
     depends_on:
       opensearch-node1:
         condition: service_started
+    environment:
+      - "OLLAMA_MODEL=phi3:mini"
 
   ollama:
     image: ollama/ollama:latest
